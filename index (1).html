@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Onboarding Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.4.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f1;
+      --surface: #ffffff;
+      --surface-2: #f0eeeb;
+      --border: #e2e0db;
+      --border-strong: #c8c5be;
+      --text: #1a1917;
+      --text-2: #5a574f;
+      --text-3: #9a9690;
+      --radius: 8px;
+      --font: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141412;
+        --surface: #1e1d1b;
+        --surface-2: #252320;
+        --border: #2e2c28;
+        --border-strong: #3e3b36;
+        --text: #f0ede8;
+        --text-2: #9a9690;
+        --text-3: #5a574f;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #378ADD;
+    }
+
+    .logo h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .total-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .add-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #378ADD;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .add-btn:hover { background: #185FA5; }
+    .add-btn i { font-size: 15px; }
+
+    /* Board */
+    .board-wrap {
+      flex: 1;
+      overflow-x: auto;
+      padding: 24px 28px 40px;
+    }
+
+    .board {
+      display: flex;
+      gap: 12px;
+      min-width: max-content;
+      align-items: flex-start;
+    }
+
+    /* Columns */
+    .col {
+      width: 210px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .col-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .col-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 10px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .col-body {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 8px;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .col-body.drag-over {
+      background: #E6F1FB;
+      border-color: #378ADD;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .col-body.drag-over {
+        background: #0C447C;
+        border-color: #378ADD;
+      }
+    }
+
+    /* Column color themes */
+    .c-signed   .col-header { background: #E6F1FB; }
+    .c-signed   .col-label  { color: #0C447C; }
+    .c-signed   .col-num    { background: #B5D4F4; color: #0C447C; }
+
+    .c-planning .col-header { background: #EEEDFE; }
+    .c-planning .col-label  { color: #3C3489; }
+    .c-planning .col-num    { background: #CECBF6; color: #3C3489; }
+
+    .c-setup    .col-header { background: #FAEEDA; }
+    .c-setup    .col-label  { color: #633806; }
+    .c-setup    .col-num    { background: #FAC775; color: #633806; }
+
+    .c-training .col-header { background: #FAECE7; }
+    .c-training .col-label  { color: #712B13; }
+    .c-training .col-num    { background: #F5C4B3; color: #712B13; }
+
+    .c-golive   .col-header { background: #EAF3DE; }
+    .c-golive   .col-label  { color: #27500A; }
+    .c-golive   .col-num    { background: #C0DD97; color: #27500A; }
+
+    .c-adopted  .col-header { background: #E1F5EE; }
+    .c-adopted  .col-label  { color: #085041; }
+    .c-adopted  .col-num    { background: #9FE1CB; color: #085041; }
+
+    @media (prefers-color-scheme: dark) {
+      .c-signed   .col-header { background: #0C447C; }
+      .c-signed   .col-label  { color: #B5D4F4; }
+      .c-signed   .col-num    { background: #185FA5; color: #B5D4F4; }
+      .c-planning .col-header { background: #3C3489; }
+      .c-planning .col-label  { color: #CECBF6; }
+      .c-planning .col-num    { background: #534AB7; color: #CECBF6; }
+      .c-setup    .col-header { background: #633806; }
+      .c-setup    .col-label  { color: #FAC775; }
+      .c-setup    .col-num    { background: #854F0B; color: #FAC775; }
+      .c-training .col-header { background: #712B13; }
+      .c-training .col-label  { color: #F5C4B3; }
+      .c-training .col-num    { background: #993C1D; color: #F5C4B3; }
+      .c-golive   .col-header { background: #27500A; }
+      .c-golive   .col-label  { color: #C0DD97; }
+      .c-golive   .col-num    { background: #3B6D11; color: #C0DD97; }
+      .c-adopted  .col-header { background: #085041; }
+      .c-adopted  .col-label  { color: #9FE1CB; }
+      .c-adopted  .col-num    { background: #0F6E56; color: #9FE1CB; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.12s, box-shadow 0.12s;
+      position: relative;
+    }
+
+    .card:hover {
+      border-color: var(--border-strong);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .card.dragging {
+      opacity: 0.3;
+      cursor: grabbing;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .card-name {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.35;
+      color: var(--text);
+    }
+
+    .card-del {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 0;
+      line-height: 1;
+      transition: opacity 0.12s, color 0.12s;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .card:hover .card-del { opacity: 1; }
+    .card-del:hover { color: #E24B4A; }
+
+    .card-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .card-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .tag-enterprise { background: #EEEDFE; color: #3C3489; }
+    .tag-startup    { background: #E1F5EE; color: #085041; }
+    .tag-risk       { background: #FCEBEB; color: #791F1F; }
+
+    @media (prefers-color-scheme: dark) {
+      .tag-enterprise { background: #3C3489; color: #CECBF6; }
+      .tag-startup    { background: #085041; color: #9FE1CB; }
+      .tag-risk       { background: #791F1F; color: #F7C1C1; }
+    }
+
+    /* Empty hint */
+    .empty-hint {
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      padding: 32px 8px;
+      line-height: 1.6;
+      font-family: var(--font-mono);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      width: 380px;
+      max-width: 92vw;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: #378ADD;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-2);
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .btn-cancel:hover { background: var(--surface-2); }
+
+    .btn-save {
+      padding: 8px 18px;
+      border: none;
+      border-radius: var(--radius);
+      background: #378ADD;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .btn-save:hover { background: #185FA5; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-3);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <h1>Onboarding pipeline</h1>
+    </div>
+    <span class="total-badge" id="total-count">11 clients</span>
+  </div>
+  <button class="add-btn" onclick="openModal()">
+    <i class="ti ti-plus" aria-hidden="true"></i> Add client
+  </button>
+</header>
+
+<main class="board-wrap">
+  <div class="board" id="board"></div>
+</main>
+
+<footer>Data is saved in your browser · drag cards to move them between stages</footer>
+
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <h2 id="modal-title">Add client</h2>
+    <div class="field">
+      <label>Client name</label>
+      <input id="f-name" type="text" placeholder="e.g. Doctolib" />
+    </div>
+    <div class="field">
+      <label>Note (optional)</label>
+      <input id="f-meta" type="text" placeholder="e.g. Go-live Jul 15" />
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select id="f-tag">
+        <option value="enterprise">Enterprise</option>
+        <option value="startup">Startup</option>
+        <option value="risk">At risk</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Stage</label>
+      <select id="f-stage">
+        <option value="signed">Signed</option>
+        <option value="planning">Planning</option>
+        <option value="setup">Setup</option>
+        <option value="training">Training</option>
+        <option value="golive">Go-live</option>
+        <option value="adopted">Adopted</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveCard()">Add client</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const COLS = [
+    { id: 'signed',   label: 'Signed' },
+    { id: 'planning', label: 'Planning' },
+    { id: 'setup',    label: 'Setup' },
+    { id: 'training', label: 'Training' },
+    { id: 'golive',   label: 'Go-live' },
+    { id: 'adopted',  label: 'Adopted' },
+  ];
+
+  const DEFAULT_CARDS = [
+    { id: 1,  name: 'Nestlé France',     meta: 'Signed Jun 27',  tag: 'enterprise', col: 'signed' },
+    { id: 2,  name: 'Luko',              meta: 'Signed Jun 28',  tag: 'startup',    col: 'signed' },
+    { id: 3,  name: 'Vinci Group',       meta: 'Kickoff Jul 2',  tag: 'enterprise', col: 'planning' },
+    { id: 4,  name: 'Alan',              meta: 'Kickoff Jul 3',  tag: 'startup',    col: 'planning' },
+    { id: 5,  name: 'JCDecaux',          meta: 'Go-live Jul 10', tag: 'enterprise', col: 'setup' },
+    { id: 6,  name: 'Payfit',            meta: 'Go-live Jul 8',  tag: 'risk',       col: 'setup' },
+    { id: 7,  name: 'Qonto',             meta: 'Session Jul 1',  tag: 'startup',    col: 'training' },
+    { id: 8,  name: 'Société Générale',  meta: 'Session Jul 3',  tag: 'enterprise', col: 'training' },
+    { id: 9,  name: 'Spendesk',          meta: 'Live Jun 20',    tag: 'startup',    col: 'golive' },
+    { id: 10, name: 'Contentsquare',     meta: 'Handed to CS',   tag: 'startup',    col: 'adopted' },
+    { id: 11, name: 'Accor Hotels',      meta: 'Handed to CS',   tag: 'enterprise', col: 'adopted' },
+  ];
+
+  function load() {
+    try {
+      const saved = localStorage.getItem('onboarding-cards');
+      return saved ? JSON.parse(saved) : DEFAULT_CARDS;
+    } catch { return DEFAULT_CARDS; }
+  }
+
+  function save(cards) {
+    try { localStorage.setItem('onboarding-cards', JSON.stringify(cards)); } catch {}
+  }
+
+  let cards = load();
+  let nextId = Math.max(...cards.map(c => c.id), 0) + 1;
+  let dragId = null;
+
+  function tagLabel(t) {
+    return t === 'enterprise' ? 'Enterprise' : t === 'startup' ? 'Startup' : 'At risk';
+  }
+
+  function render() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+
+    COLS.forEach(c => {
+      const colCards = cards.filter(x => x.col === c.id);
+      const col = document.createElement('div');
+      col.className = `col c-${c.id}`;
+
+      const header = document.createElement('div');
+      header.className = 'col-header';
+      header.innerHTML = `<span class="col-label">${c.label}</span><span class="col-num">${colCards.length}</span>`;
+
+      const body = document.createElement('div');
+      body.className = 'col-body';
+      body.dataset.col = c.id;
+
+      body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('drag-over'); });
+      body.addEventListener('dragleave', e => { if (!body.contains(e.relatedTarget)) body.classList.remove('drag-over'); });
+      body.addEventListener('drop', e => {
+        e.preventDefault();
+        body.classList.remove('drag-over');
+        if (dragId !== null) {
+          const card = cards.find(x => x.id === dragId);
+          if (card) { card.col = c.id; save(cards); }
+          dragId = null;
+          render();
+        }
+      });
+
+      if (colCards.length === 0) {
+        body.innerHTML = '<p class="empty-hint">Drop a client here</p>';
+      } else {
+        colCards.forEach(card => {
+          const el = document.createElement('div');
+          el.className = 'card';
+          el.draggable = true;
+          el.dataset.id = card.id;
+          el.innerHTML = `
+            <div class="card-top">
+              <span class="card-name">${card.name}</span>
+              <button class="card-del" onclick="deleteCard(${card.id})" aria-label="Remove ${card.name}">
+                <i class="ti ti-x" aria-hidden="true"></i>
+              </button>
+            </div>
+            ${card.meta ? `<div class="card-meta">${card.meta}</div>` : ''}
+            <span class="card-tag tag-${card.tag}">${tagLabel(card.tag)}</span>`;
+
+          el.addEventListener('dragstart', () => { dragId = card.id; el.classList.add('dragging'); });
+          el.addEventListener('dragend', () => el.classList.remove('dragging'));
+          body.appendChild(el);
+        });
+      }
+
+      col.appendChild(header);
+      col.appendChild(body);
+      board.appendChild(col);
+    });
+
+    document.getElementById('total-count').textContent = `${cards.length} client${cards.length !== 1 ? 's' : ''}`;
+  }
+
+  function deleteCard(id) {
+    cards = cards.filter(x => x.id !== id);
+    save(cards);
+    render();
+  }
+
+  function openModal() {
+    document.getElementById('modal').classList.add('open');
+    document.getElementById('f-name').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-meta').value = '';
+  }
+
+  function saveCard() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { document.getElementById('f-name').focus(); return; }
+    cards.push({
+      id: nextId++,
+      name,
+      meta: document.getElementById('f-meta').value.trim(),
+      tag: document.getElementById('f-tag').value,
+      col: document.getElementById('f-stage').value,
+    });
+    save(cards);
+    closeModal();
+    render();
+  }
+
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+  document.getElementById('f-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveCard(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  render();
+</script>
+</body>
+</html>
